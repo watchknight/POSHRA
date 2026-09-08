@@ -10,6 +10,7 @@ create or replace function public.decrement_product_stock(
 returns boolean
 language plpgsql
 security definer
+set search_path = public
 as $$
 declare
   v_updated integer;
@@ -26,3 +27,6 @@ begin
   return v_updated > 0;
 end;
 $$;
+
+-- Grant execute permissions so PostgREST RPC can expose it
+grant execute on function public.decrement_product_stock(uuid, integer) to anon, authenticated, service_role;
