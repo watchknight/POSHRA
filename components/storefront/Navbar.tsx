@@ -199,7 +199,7 @@ export function Navbar({ categories = [] }: NavbarProps) {
             </div>
 
             <div className="border-t border-gray-100 pt-4 text-xs text-gray-500">
-              <p>Hotline: +880 1700-000000</p>
+              <p>Hotline: <a href="tel:01898919219" className="text-gray-900 font-semibold hover:underline">01898-919219</a> / <a href="tel:01856615858" className="text-gray-900 font-semibold hover:underline">01856-615858</a></p>
               <p className="mt-1">Cash on Delivery Available</p>
             </div>
           </div>

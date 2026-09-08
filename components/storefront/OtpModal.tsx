@@ -182,7 +182,7 @@ export default function OtpModal({ isOpen, phone, orderId, orderNumber, onVerifi
           <div className="border-t border-gray-100 pt-3">
             <p className="text-xs text-gray-500 mb-1.5">Didn&apos;t receive SMS after 60 seconds?</p>
             <a
-              href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '8801700000000'}?text=${encodeURIComponent(`Hi Poshra support, I placed order ${orderNumber} with phone ${phone} and need help verifying my order.`)}`}
+              href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '8801898919219'}?text=${encodeURIComponent(`Hi Poshra support, I placed order ${orderNumber} with phone ${phone} and need help verifying my order.`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-full transition-colors"

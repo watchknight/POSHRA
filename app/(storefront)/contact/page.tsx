@@ -33,7 +33,7 @@ export default function ContactPage() {
               For instant response, order updates, or product videos, message us directly on WhatsApp.
             </p>
             <a
-              href="https://wa.me/8801700000000?text=Hi%20Poshra,%20I%20need%20assistance"
+              href="https://wa.me/8801898919219?text=Hi%20Poshra,%20I%20need%20assistance"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 transition-colors"
@@ -53,7 +53,9 @@ export default function ContactPage() {
                 <Phone className="h-4 w-4 shrink-0 text-gray-900 mt-0.5" />
                 <div>
                   <p className="font-semibold text-gray-900">Phone Hotline</p>
-                  <p className="text-gray-500">+880 1700-000000</p>
+                  <p className="text-gray-700 font-medium">
+                    <a href="tel:01898919219" className="hover:underline">01898-919219</a> / <a href="tel:01856615858" className="hover:underline">01856-615858</a>
+                  </p>
                 </div>
               </div>
 
