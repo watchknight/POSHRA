@@ -9,12 +9,14 @@ interface CatalogFiltersProps {
   categories: Category[]
   currentCategory?: string
   totalCount: number
+  children: React.ReactNode
 }
 
 export function CatalogFilters({
   categories,
   currentCategory,
   totalCount,
+  children,
 }: CatalogFiltersProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -77,15 +79,47 @@ export function CatalogFilters({
 
   const FilterContent = (
     <div className="space-y-6">
+      {/* Sort By section */}
+      <div>
+        <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900 mb-3">
+          Sort By
+        </h4>
+        <div className="space-y-1.5">
+          {sortOptions.map((opt) => {
+            const isSelected = activeSort === opt.value
+            return (
+              <button
+                key={opt.value}
+                onClick={() => {
+                  updateParam('sort', opt.value)
+                  setMobileFilterOpen(false)
+                }}
+                className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                  isSelected
+                    ? 'bg-gray-900 text-white'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <span>{opt.label}</span>
+                {isSelected && <Check className="h-3.5 w-3.5" />}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       {/* Active Category if on all products page */}
       {!currentCategory && categories.length > 0 && (
-        <div>
+        <div className="border-t border-gray-100 pt-5">
           <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900 mb-3">
             Category
           </h4>
           <div className="space-y-1.5">
             <button
-              onClick={() => updateParam('category', null)}
+              onClick={() => {
+                updateParam('category', null)
+                setMobileFilterOpen(false)
+              }}
               className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
                 !searchParams.get('category')
                   ? 'bg-gray-900 text-white'
@@ -100,7 +134,10 @@ export function CatalogFilters({
               return (
                 <button
                   key={cat.id}
-                  onClick={() => updateParam('category', cat.slug)}
+                  onClick={() => {
+                    updateParam('category', cat.slug)
+                    setMobileFilterOpen(false)
+                  }}
                   className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
                     isSelected
                       ? 'bg-gray-900 text-white'
@@ -175,52 +212,68 @@ export function CatalogFilters({
     </div>
   )
 
+  const hasActiveFilters = Boolean(
+    inStockOnly || minPrice || maxPrice || searchParams.get('category') || (activeSort && activeSort !== 'newest')
+  )
+
   return (
     <>
-      {/* Top Bar with Filter Toggle (Mobile) and Sort Dropdown */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-6 mb-6 border-b border-gray-100">
-        <div className="flex items-center gap-2">
-          {/* Mobile filter button */}
-          <button
-            onClick={() => setMobileFilterOpen(true)}
-            className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-800 shadow-2xs hover:bg-gray-50 lg:hidden"
-          >
-            <Filter className="h-3.5 w-3.5 text-gray-500" />
-            <span>Filter</span>
-            {(inStockOnly || minPrice || maxPrice || searchParams.get('category')) && (
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            )}
-          </button>
-
-          <p className="text-xs text-gray-500">
-            Showing <span className="font-semibold text-gray-900">{totalCount}</span> products
-          </p>
-        </div>
-
-        {/* Sort selector */}
-        <div className="flex items-center gap-2">
-          <ArrowUpDown className="h-3.5 w-3.5 text-gray-400" />
-          <select
-            value={activeSort}
-            onChange={(e) => updateParam('sort', e.target.value)}
-            className="rounded-xl border border-gray-200 bg-white py-1.5 pl-2.5 pr-8 text-xs font-medium text-gray-800 focus:border-gray-900 focus:outline-none shadow-2xs cursor-pointer"
-          >
-            {sortOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Desktop Sidebar (Rendered inside desktop catalog page layout) */}
-      <div className="hidden lg:block w-56 shrink-0">
-        <div className="sticky top-24 rounded-2xl border border-gray-100 bg-white p-5 shadow-xs">
-          <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100">
-            <h3 className="text-sm font-bold text-gray-900">Filters</h3>
+      <div className="flex flex-col lg:flex-row gap-5 lg:gap-8">
+        {/* Desktop Sidebar (Rendered inside desktop catalog page layout) */}
+        <div className="hidden lg:block w-56 shrink-0">
+          <div className="sticky top-24 rounded-2xl border border-gray-100 bg-white p-5 shadow-xs">
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100">
+              <h3 className="text-sm font-bold text-gray-900">Filters & Sort</h3>
+            </div>
+            {FilterContent}
           </div>
-          {FilterContent}
+        </div>
+
+        {/* Product Grid Area with Top Bar */}
+        <div className="flex-1 min-w-0">
+          {/* Top Bar with Mobile Filter Toggle and Sort Dropdown */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-gray-100">
+            <div className="flex items-center gap-2">
+              {/* Mobile filter button */}
+              <button
+                onClick={() => setMobileFilterOpen(true)}
+                className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-800 shadow-2xs hover:bg-gray-50 lg:hidden"
+              >
+                <Filter className="h-3.5 w-3.5 text-gray-500" />
+                <span>Filter & Sort</span>
+                {hasActiveFilters && (
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                )}
+              </button>
+
+              <p className="text-xs text-gray-500">
+                Showing <span className="font-semibold text-gray-900">{totalCount}</span> products
+              </p>
+            </div>
+
+            {/* Quick sort dropdown */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-gray-500 hidden sm:inline">Sort:</span>
+              <div className="relative flex items-center">
+                <ArrowUpDown className="h-3.5 w-3.5 text-gray-400 absolute left-2.5 pointer-events-none" />
+                <select
+                  value={activeSort}
+                  onChange={(e) => updateParam('sort', e.target.value)}
+                  className="rounded-xl border border-gray-200 bg-white py-1.5 pl-8 pr-7 text-xs font-medium text-gray-800 focus:border-gray-900 focus:outline-none shadow-2xs cursor-pointer appearance-none"
+                >
+                  {sortOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="pointer-events-none absolute right-2.5 text-[10px] text-gray-400">▼</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Children (Product Grid or Empty State) */}
+          {children}
         </div>
       </div>
 
@@ -232,9 +285,9 @@ export function CatalogFilters({
             onClick={() => setMobileFilterOpen(false)}
           />
           <div className="fixed inset-y-0 right-0 w-4/5 max-w-xs bg-white p-6 shadow-xl flex flex-col justify-between animate-in slide-in-from-right duration-300">
-            <div>
+            <div className="overflow-y-auto max-h-[calc(100vh-100px)] pr-1">
               <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-                <h3 className="text-base font-bold text-gray-900">Filters</h3>
+                <h3 className="text-base font-bold text-gray-900">Filters & Sort</h3>
                 <button
                   onClick={() => setMobileFilterOpen(false)}
                   className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
@@ -243,13 +296,13 @@ export function CatalogFilters({
                 </button>
               </div>
 
-              <div className="mt-6">{FilterContent}</div>
+              <div className="mt-5">{FilterContent}</div>
             </div>
 
             <div className="pt-4 border-t border-gray-100">
               <button
                 onClick={() => setMobileFilterOpen(false)}
-                className="w-full rounded-xl bg-gray-900 py-3 text-xs font-bold text-white hover:bg-gray-800"
+                className="w-full rounded-xl bg-gray-900 py-3 text-xs font-bold text-white hover:bg-gray-800 shadow-xs"
               >
                 View Results ({totalCount})
               </button>
