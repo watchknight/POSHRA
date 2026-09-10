@@ -104,18 +104,18 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   const totalCount = count || products.length
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-5 sm:py-8">
       {/* Category Header */}
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
           {currentCategory.name}
         </h1>
-        <p className="text-xs sm:text-sm text-gray-500 mt-1 max-w-2xl">
-          Explore our top-selling {currentCategory.name.toLowerCase()} with Cash on Delivery nationwide.
+        <p className="text-xs sm:text-sm text-gray-500 mt-0.5 max-w-2xl">
+          Explore our top-selling {currentCategory.name.toLowerCase()} with Cash on Delivery nationwide (হাতে পেয়ে মূল্য পরিশোধ).
         </p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8">
+      <div className="flex flex-col lg:flex-row gap-5 lg:gap-8">
         <CatalogFilters
           categories={categories}
           currentCategory={currentCategory.slug}
@@ -124,9 +124,9 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
         <div className="flex-1 min-w-0">
           {products.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-3xl border border-gray-100 bg-gray-50/60 p-12 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-xs text-gray-400 mb-4">
-                <PackageOpen className="h-8 w-8" />
+            <div className="flex flex-col items-center justify-center rounded-3xl border border-gray-100 bg-gray-50/60 p-8 sm:p-12 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-xs text-gray-400 mb-3">
+                <PackageOpen className="h-7 w-7" />
               </div>
               <h3 className="text-base font-bold text-gray-900">No products found</h3>
               <p className="mt-1 text-xs text-gray-500 max-w-sm">
@@ -134,13 +134,13 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
               </p>
               <Link
                 href={`/category/${slug}`}
-                className="mt-6 rounded-xl bg-gray-900 px-5 py-2.5 text-xs font-bold text-white hover:bg-gray-800 transition-colors shadow-xs"
+                className="mt-5 rounded-xl bg-gray-900 px-5 py-2 text-xs font-bold text-white hover:bg-gray-800 transition-colors shadow-xs"
               >
                 Clear Filters
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3">
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3">
               {products.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -151,3 +151,4 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     </div>
   )
 }
+

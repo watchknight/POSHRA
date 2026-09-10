@@ -39,39 +39,39 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
 
         {/* Discount Badge */}
         {discountPercent ? (
-          <span className="absolute left-2.5 top-2.5 rounded-md bg-red-600 px-2 py-1 text-[11px] font-bold text-white shadow-xs">
+          <span className="absolute left-2 top-2 rounded-md bg-red-600 px-1.5 py-0.5 sm:px-2 sm:py-1 text-[10px] sm:text-[11px] font-extrabold text-white shadow-xs">
             -{discountPercent}%
           </span>
         ) : null}
 
         {/* Stock Status Badge */}
         {product.stock_qty <= 0 ? (
-          <span className="absolute right-2.5 top-2.5 rounded-md bg-gray-900/80 px-2 py-1 text-[10px] font-bold uppercase text-white backdrop-blur-xs">
+          <span className="absolute right-2 top-2 rounded-md bg-gray-900/85 px-1.5 py-0.5 sm:px-2 sm:py-1 text-[9px] sm:text-[10px] font-bold uppercase text-white backdrop-blur-xs">
             Sold Out
           </span>
         ) : product.stock_qty < 10 ? (
-          <span className="absolute right-2.5 top-2.5 rounded-md bg-amber-500/90 px-2 py-1 text-[10px] font-bold uppercase text-white backdrop-blur-xs">
+          <span className="absolute right-2 top-2 rounded-md bg-amber-500/95 px-1.5 py-0.5 sm:px-2 sm:py-1 text-[9px] sm:text-[10px] font-bold uppercase text-white backdrop-blur-xs">
             Low Stock
           </span>
         ) : null}
       </Link>
 
       {/* Details Container */}
-      <div className="flex flex-1 flex-col justify-between p-3.5 sm:p-4">
+      <div className="flex flex-1 flex-col justify-between p-2.5 sm:p-4">
         <div>
           {/* Star Rating */}
           <div className="flex items-center gap-1 text-amber-400">
-            <Star className="h-3.5 w-3.5 fill-amber-400" />
-            <span className="text-xs font-semibold text-gray-800">
+            <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-amber-400" />
+            <span className="text-[11px] sm:text-xs font-bold text-gray-800">
               {Number(product.rating_avg || 5.0).toFixed(1)}
             </span>
-            <span className="text-[11px] text-gray-400">
+            <span className="text-[10px] sm:text-[11px] text-gray-400">
               ({product.rating_count || 0})
             </span>
           </div>
 
           {/* Title */}
-          <Link href={`/product/${product.slug}`} className="mt-1.5 block">
+          <Link href={`/product/${product.slug}`} className="mt-1 sm:mt-1.5 block">
             <h3 className="text-xs sm:text-sm font-semibold text-gray-900 line-clamp-2 leading-snug group-hover:text-emerald-700 transition-colors">
               {product.name}
             </h3>
@@ -79,29 +79,29 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         </div>
 
         {/* Price & Action */}
-        <div className="mt-3 pt-2 border-t border-gray-50 flex items-end justify-between gap-2">
-          <div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-sm sm:text-base font-extrabold text-gray-900">
+        <div className="mt-2.5 sm:mt-3 pt-2 border-t border-gray-50 flex items-end justify-between gap-1.5 sm:gap-2">
+          <div className="min-w-0">
+            <div className="flex items-baseline gap-1 sm:gap-1.5 flex-wrap">
+              <span className="text-xs sm:text-base font-extrabold text-gray-900">
                 {formatBDT(product.price)}
               </span>
               {product.compare_at_price && (
-                <span className="text-xs text-gray-400 line-through">
+                <span className="text-[10px] sm:text-xs text-gray-400 line-through">
                   {formatBDT(product.compare_at_price)}
                 </span>
               )}
             </div>
-            <span className="text-[10px] text-emerald-700 font-medium">
+            <span className="text-[9px] sm:text-[10px] text-emerald-700 font-semibold block truncate">
               Cash on Delivery
             </span>
           </div>
 
           <Link
             href={`/product/${product.slug}`}
-            className="flex h-8 w-8 items-center justify-center rounded-xl bg-gray-100 text-gray-700 group-hover:bg-gray-900 group-hover:text-white transition-colors"
+            className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-gray-100 text-gray-700 group-hover:bg-gray-900 group-hover:text-white transition-colors"
             aria-label={`View ${product.name}`}
           >
-            <ShoppingBag className="h-4 w-4" />
+            <ShoppingBag className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </Link>
         </div>
       </div>
