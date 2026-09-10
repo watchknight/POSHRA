@@ -8,15 +8,66 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { mapSteadfastStatus } from '@/lib/courier/steadfast'
-import type { Order, StatusHistoryEntry } from '@/types'
+import { ORDER_STATUS_PIPELINE } from '@/types'
+import type { Order, OrderItem, StatusHistoryEntry, OrderStatus } from '@/types'
+
+/**
+ * Restores product inventory and coupon usage when an order is cancelled.
+ */
+async function restoreOrderStockAndCoupon(supabase: any, order: Order) {
+  try {
+    const items = (Array.isArray(order.items) ? order.items : []) as unknown as OrderItem[]
+    for (const item of items) {
+      if (item.product_id && item.quantity > 0) {
+        const { data: pRaw } = await supabase
+          .from('products')
+          .select('stock_qty')
+          .eq('id', item.product_id)
+          .single()
+
+        if (pRaw) {
+          await supabase
+            .from('products')
+            .update({ stock_qty: (pRaw.stock_qty || 0) + item.quantity })
+            .eq('id', item.product_id)
+        }
+      }
+    }
+
+    if (order.coupon_code) {
+      const { data: couponRaw } = await supabase
+        .from('coupons')
+        .select('id, times_used')
+        .eq('code', order.coupon_code)
+        .maybeSingle()
+
+      if (couponRaw && (couponRaw.times_used || 0) > 0) {
+        await supabase
+          .from('coupons')
+          .update({ times_used: couponRaw.times_used - 1 })
+          .eq('id', couponRaw.id)
+      }
+    }
+  } catch (err) {
+    console.error('Failed to restore cancelled order stock/coupon in webhook:', err)
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
-    // Optional: validate webhook secret
+    // Validate webhook secret if configured
     const webhookSecret = process.env.STEADFAST_WEBHOOK_SECRET
     if (webhookSecret) {
-      const authHeader = request.headers.get('authorization')
-      if (authHeader !== `Bearer ${webhookSecret}`) {
+      const authHeader = request.headers.get('authorization') || ''
+      const secretHeader =
+        request.headers.get('x-webhook-secret') ||
+        request.headers.get('api-key') ||
+        request.headers.get('secret-key') ||
+        ''
+      const isBearerMatch = authHeader === `Bearer ${webhookSecret}` || authHeader === webhookSecret
+      const isCustomHeaderMatch = secretHeader === webhookSecret
+
+      if (!isBearerMatch && !isCustomHeaderMatch) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
     }
@@ -59,10 +110,14 @@ export async function POST(request: NextRequest) {
 
     // Build status history entry
     const currentHistory = (order.status_history || []) as unknown as StatusHistoryEntry[]
-
     const updates: Record<string, unknown> = {}
 
-    if (mapping.orderStatus && mapping.orderStatus !== order.order_status) {
+    // Out-of-order protection: disallow regressive status updates (e.g. out_for_delivery -> shipped)
+    const currentPipelineIdx = ORDER_STATUS_PIPELINE.indexOf(order.order_status as OrderStatus)
+    const newPipelineIdx = mapping.orderStatus ? ORDER_STATUS_PIPELINE.indexOf(mapping.orderStatus as OrderStatus) : -1
+    const isRegressive = currentPipelineIdx !== -1 && newPipelineIdx !== -1 && newPipelineIdx <= currentPipelineIdx
+
+    if (mapping.orderStatus && mapping.orderStatus !== order.order_status && !isRegressive) {
       updates.order_status = mapping.orderStatus
 
       const newEntry: StatusHistoryEntry = {
@@ -71,6 +126,10 @@ export async function POST(request: NextRequest) {
         at: new Date().toISOString(),
       }
       updates.status_history = [...currentHistory, newEntry]
+
+      if (mapping.orderStatus === 'cancelled' && order.order_status !== 'cancelled') {
+        await restoreOrderStockAndCoupon(supabase, order)
+      }
     }
 
     if (mapping.paymentStatus && mapping.paymentStatus !== order.payment_status) {

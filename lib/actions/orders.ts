@@ -70,6 +70,7 @@ export async function validateCouponAction(code: string, subtotal: number) {
       code: coupon.code,
       type: coupon.type,
       value: coupon.value,
+      min_order_amount: coupon.min_order_amount || undefined,
     },
     discount,
   }
@@ -704,6 +705,11 @@ export async function updateOrderStatusAction(
     }
   }
 
+  // If transitioning to cancelled, replenish reserved inventory & coupon usage
+  if (newStatus === 'cancelled' && order.order_status !== 'cancelled') {
+    await restoreCancelledOrderStockAndCoupon(supabase, order)
+  }
+
   // Build new status history entry
   const currentHistory = (order.status_history || []) as unknown as StatusHistoryEntry[]
   const newEntry: StatusHistoryEntry = {
@@ -725,6 +731,48 @@ export async function updateOrderStatusAction(
   }
 
   return { success: true as const }
+}
+
+/**
+ * Restores product inventory and coupon usage when an order is cancelled.
+ */
+async function restoreCancelledOrderStockAndCoupon(supabase: any, order: Order) {
+  try {
+    const items = (Array.isArray(order.items) ? order.items : []) as unknown as OrderItem[]
+    for (const item of items) {
+      if (item.product_id && item.quantity > 0) {
+        const { data: pRaw } = await supabase
+          .from('products')
+          .select('stock_qty')
+          .eq('id', item.product_id)
+          .single()
+
+        if (pRaw) {
+          await supabase
+            .from('products')
+            .update({ stock_qty: (pRaw.stock_qty || 0) + item.quantity })
+            .eq('id', item.product_id)
+        }
+      }
+    }
+
+    if (order.coupon_code) {
+      const { data: couponRaw } = await supabase
+        .from('coupons')
+        .select('id, times_used')
+        .eq('code', order.coupon_code)
+        .maybeSingle()
+
+      if (couponRaw && (couponRaw.times_used || 0) > 0) {
+        await supabase
+          .from('coupons')
+          .update({ times_used: couponRaw.times_used - 1 })
+          .eq('id', couponRaw.id)
+      }
+    }
+  } catch (err) {
+    console.error('Failed to restore cancelled order stock/coupon:', err)
+  }
 }
 
 /**
@@ -775,6 +823,10 @@ export async function bulkUpdateStatusAction(
       at: new Date().toISOString(),
     }
 
+    if (targetStatus === 'cancelled' && order.order_status !== 'cancelled') {
+      await restoreCancelledOrderStockAndCoupon(supabase, order)
+    }
+
     const { error: updateErr } = await (supabase.from('orders') as any)
       .update({
         order_status: targetStatus,
@@ -811,17 +863,13 @@ export async function updateOrderFieldsAction(
   }
 ) {
   await assertAdminAuth()
-  const parsed = orderFieldsUpdateSchema.safeParse({
-    order_id: orderId,
-    ...fields,
-  })
+  const parsed = orderFieldsUpdateSchema.safeParse(fields)
   if (!parsed.success) {
     return { success: false as const, error: parsed.error.issues[0]?.message || 'Invalid input.' }
   }
 
   const supabase = createAdminClient()
 
-  // Build update object — only include fields that were actually passed
   const updateData: Record<string, string | null> = {}
   if (fields.supplier_order_ref !== undefined) {
     updateData.supplier_order_ref = fields.supplier_order_ref || null
@@ -847,6 +895,49 @@ export async function updateOrderFieldsAction(
   if (error) {
     console.error('Order fields update error:', error)
     return { success: false as const, error: 'Failed to update order. Please try again.' }
+  }
+
+  return { success: true as const }
+}
+
+/**
+ * Admin action to manually verify an order via phone call when SMS OTP is delayed or fails.
+ */
+export async function adminVerifyPhoneOrderAction(orderId: string, adminNote?: string) {
+  await assertAdminAuth()
+  if (!orderId) {
+    return { success: false as const, error: 'Order ID is required.' }
+  }
+
+  const supabase = createAdminClient()
+
+  const { data: orderRaw, error: fetchErr } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('id', orderId)
+    .single()
+
+  if (fetchErr || !orderRaw) {
+    return { success: false as const, error: 'Order not found.' }
+  }
+
+  const order = orderRaw as Order
+  const currentHistory = (order.status_history || []) as unknown as StatusHistoryEntry[]
+  const newEntry: StatusHistoryEntry = {
+    status: order.order_status,
+    note: adminNote || 'Order verified via customer phone call by admin',
+    at: new Date().toISOString(),
+  }
+
+  const { error: updateErr } = await (supabase.from('orders') as any)
+    .update({
+      otp_verified: true,
+      status_history: [...currentHistory, newEntry],
+    })
+    .eq('id', orderId)
+
+  if (updateErr) {
+    return { success: false as const, error: 'Failed to verify order.' }
   }
 
   return { success: true as const }

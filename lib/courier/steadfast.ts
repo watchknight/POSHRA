@@ -123,6 +123,19 @@ export function mapSteadfastStatus(steadfastStatus: string): {
         paymentStatus: null,
         note: 'Delivery cancelled/refused — Steadfast',
       }
+    case 'in_transit':
+    case 'shipped':
+      return {
+        orderStatus: 'shipped',
+        paymentStatus: null,
+        note: 'In transit with Steadfast courier',
+      }
+    case 'out_for_delivery':
+      return {
+        orderStatus: 'out_for_delivery',
+        paymentStatus: null,
+        note: 'Out for delivery today — Steadfast courier',
+      }
     case 'in_review':
     case 'pending':
       return {

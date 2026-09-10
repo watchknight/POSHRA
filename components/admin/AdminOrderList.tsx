@@ -246,15 +246,44 @@ export function AdminOrderList({ initialFilters }: { initialFilters: Filters }) 
             </thead>
             <tbody className="divide-y">
               {loading ? (
-                <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
-                    Loading orders...
-                  </td>
-                </tr>
+                Array.from({ length: 5 }).map((_, idx) => (
+                  <tr key={idx} className="animate-pulse">
+                    <td className="px-4 py-4"><div className="h-4 w-4 bg-gray-200 rounded" /></td>
+                    <td className="px-4 py-4"><div className="h-4 w-24 bg-gray-200 rounded" /></td>
+                    <td className="px-4 py-4 space-y-1">
+                      <div className="h-4 w-32 bg-gray-200 rounded" />
+                      <div className="h-3 w-20 bg-gray-100 rounded" />
+                    </td>
+                    <td className="px-4 py-4"><div className="h-4 w-16 bg-gray-200 rounded" /></td>
+                    <td className="px-4 py-4 hidden sm:table-cell"><div className="h-5 w-20 bg-gray-200 rounded-full" /></td>
+                    <td className="px-4 py-4 hidden md:table-cell"><div className="h-5 w-12 bg-gray-200 rounded" /></td>
+                    <td className="px-4 py-4 hidden lg:table-cell"><div className="h-4 w-14 bg-gray-200 rounded" /></td>
+                    <td className="px-4 py-4 text-right"><div className="h-4 w-10 bg-gray-200 rounded ml-auto" /></td>
+                  </tr>
+                ))
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
-                    No orders found.
+                  <td colSpan={8} className="px-4 py-12 text-center text-gray-500">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <svg className="w-10 h-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                      <p className="text-sm font-medium text-gray-600">No orders found</p>
+                      <p className="text-xs text-gray-400">
+                        {filters.status || filters.search || filters.payment || filters.date
+                          ? 'No orders match your active filter criteria.'
+                          : 'Orders placed by customers will appear here.'}
+                      </p>
+                      {(filters.status || filters.search || filters.payment || filters.date) && (
+                        <button
+                          type="button"
+                          onClick={() => setFilters({ status: '', search: '', payment: '', date: '', page: '1' })}
+                          className="mt-2 text-xs font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1.5 rounded-md transition-colors"
+                        >
+                          Clear all filters
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ) : (

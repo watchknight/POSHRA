@@ -1,9 +1,23 @@
 import { z } from 'zod'
 
-/** Bangladesh phone number: 01XXXXXXXXX (11 digits) */
+/** 
+ * Bangladesh phone number sanitizer and validator.
+ * Accepts: 01712345678, +8801712345678, 8801712345678, 01712-345678, 01712 345678
+ * Automatically strips whitespace, dashes, plus sign, and leading 88 country code.
+ * Validates final result matches standard 11-digit format: 01[3-9]\d{8}
+ */
 export const bdPhone = z
   .string()
-  .regex(/^01[3-9]\d{8}$/, 'Invalid phone number (format: 01XXXXXXXXX)')
+  .transform((val) => {
+    let cleaned = val.replace(/[\s\-+()]/g, '')
+    if (cleaned.startsWith('880')) {
+      cleaned = cleaned.slice(2)
+    }
+    return cleaned
+  })
+  .refine((val) => /^01[3-9]\d{8}$/.test(val), {
+    message: 'Please enter a valid 11-digit Bangladeshi mobile number (e.g. 01712345678).',
+  })
 
 // ── Checkout ────────────────────────────────────────────────
 export const checkoutSchema = z.object({

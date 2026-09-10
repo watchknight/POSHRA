@@ -133,7 +133,13 @@ export function CheckoutForm() {
       return
     }
 
-    if (!customerPhone.match(/^01[3-9]\d{8}$/)) {
+    // Normalize phone number (strip whitespace, dashes, +88 / 88 prefix)
+    let normalizedPhone = customerPhone.replace(/[\s\-+()]/g, '')
+    if (normalizedPhone.startsWith('880')) {
+      normalizedPhone = normalizedPhone.slice(2)
+    }
+
+    if (!normalizedPhone.match(/^01[3-9]\d{8}$/)) {
       setErrorMessage('Please enter a valid 11-digit Bangladeshi mobile number (e.g. 01712345678).')
       return
     }
@@ -149,7 +155,7 @@ export function CheckoutForm() {
       const result = await createOrderAction(
         {
           customer_name: customerName,
-          customer_phone: customerPhone,
+          customer_phone: normalizedPhone,
           customer_email: customerEmail || undefined,
           delivery_district: selectedDistrict,
           delivery_thana: selectedThana,

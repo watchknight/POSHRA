@@ -8,6 +8,7 @@ export interface AppliedCoupon {
   code: string
   type: 'percent' | 'flat'
   value: number // percent or paisa
+  min_order_amount?: number
 }
 
 interface CartStore {
@@ -106,6 +107,10 @@ export const useCartStore = create<CartStore>()(
         const subtotal = get().totalPrice()
         const coupon = get().appliedCoupon
         if (!coupon || subtotal <= 0) return 0
+
+        if (coupon.min_order_amount && subtotal < coupon.min_order_amount) {
+          return 0
+        }
 
         if (coupon.type === 'percent') {
           return Math.round((subtotal * coupon.value) / 100)

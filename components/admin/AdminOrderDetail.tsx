@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { updateOrderStatusAction, updateOrderFieldsAction } from '@/lib/actions/orders'
+import { updateOrderStatusAction, updateOrderFieldsAction, adminVerifyPhoneOrderAction } from '@/lib/actions/orders'
 import { createSteadfastParcelAction, syncSteadfastStatusAction } from '@/lib/actions/courier'
 import { formatBDT, formatDate, timeAgo, getNextStatuses, copyToClipboard } from '@/lib/utils'
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, ORDER_STATUS_PIPELINE } from '@/types'
@@ -121,6 +121,24 @@ export function AdminOrderDetail({ order }: AdminOrderDetailProps) {
   const [copied, setCopied] = useState(false)
   const [isCourierLoading, setIsCourierLoading] = useState(false)
   const [isSyncingCourier, setIsSyncingCourier] = useState(false)
+  const [isVerifyingPhone, setIsVerifyingPhone] = useState(false)
+
+  const handleAdminVerifyPhone = async () => {
+    if (!confirm('Mark this order as phone-verified after calling customer?')) return
+    setIsVerifyingPhone(true)
+    try {
+      const res = await adminVerifyPhoneOrderAction(order.id)
+      if (res.success) {
+        router.refresh()
+      } else {
+        alert(res.error || 'Failed to verify order')
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error verifying order')
+    } finally {
+      setIsVerifyingPhone(false)
+    }
+  }
 
   const handleSendToSteadfast = async () => {
     setIsCourierLoading(true)
@@ -232,9 +250,20 @@ export function AdminOrderDetail({ order }: AdminOrderDetailProps) {
                 ✓ OTP Verified
               </span>
             ) : (
-              <span className="px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800 border border-orange-200">
-                ⚠ OTP Not Verified
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800 border border-orange-200">
+                  ⚠ OTP Not Verified
+                </span>
+                <button
+                  type="button"
+                  onClick={handleAdminVerifyPhone}
+                  disabled={isVerifyingPhone}
+                  className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+                  title="Mark order as confirmed after calling the customer"
+                >
+                  {isVerifyingPhone ? 'Verifying...' : '📞 Confirm via Phone Call'}
+                </button>
+              </div>
             )}
           </div>
           <p className="text-sm text-gray-500 mt-1">Placed {timeAgo(new Date(order.created_at))}</p>
